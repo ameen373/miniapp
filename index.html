@@ -78,9 +78,10 @@
 
       } catch (error) {
 
-        console.log(error);
+  console.error("AdsGram error:", error);
 
-        status.textContent = "لم تكتمل مشاهدة الإعلان.";
+  status.textContent =
+    "حدث خطأ: " + JSON.stringify(error);
 
       }
 
