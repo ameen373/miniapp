@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Mini App</title>
+  <title>Mini App - AdsGram</title>
 
   <!-- Telegram Mini App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -13,79 +14,260 @@
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 40px 20px;
-      background: #f5f5f5;
+    * {
+      box-sizing: border-box;
     }
 
-    button {
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+      color: #222;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 18px;
+      padding: 30px 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 26px;
+    }
+
+    p {
+      line-height: 1.7;
+    }
+
+    #adButton {
+      width: 100%;
       border: 0;
       border-radius: 12px;
-      padding: 15px 25px;
+      padding: 16px 20px;
       font-size: 18px;
+      font-weight: bold;
       cursor: pointer;
+      background: #0088cc;
+      color: white;
+      margin-top: 15px;
+    }
+
+    #adButton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     #status {
       margin-top: 20px;
+      padding: 10px;
+      border-radius: 10px;
+      line-height: 1.6;
+      word-break: break-word;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>🎁 احصل على مكافأة</h1>
+  <div class="container">
 
-  <p>اضغط على الزر لمشاهدة الإعلان.</p>
+    <h1>🎁 المكافأة</h1>
 
-  <button id="adButton">
-    📺 مشاهدة الإعلان
-  </button>
+    <p>
+      شاهد الإعلان حتى النهاية للحصول على المكافأة.
+    </p>
 
-  <div id="status"></div>
+    <button id="adButton">
+      📺 مشاهدة الإعلان
+    </button>
+
+    <div id="status"></div>
+
+  </div>
+
 
   <script>
 
-    // =====================================
-    // ضع Block ID الخاص بك هنا
-    // =====================================
+    // =========================================
+    // Telegram
+    // =========================================
 
-    const BLOCK_ID = "int-43797";
+    const tg = window.Telegram?.WebApp;
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
 
 
-    // تهيئة AdsGram
-    const AdController = window.Adsgram.init({
-      blockId: BLOCK_ID
-    });
+    // =========================================
+    // AdsGram
+    // =========================================
 
+    // هذا هو Block ID الصحيح
+    const BLOCK_ID = "43795";
+
+    let AdController = null;
+
+
+    // =========================================
+    // عناصر الصفحة
+    // =========================================
 
     const button = document.getElementById("adButton");
     const status = document.getElementById("status");
 
 
-    button.addEventListener("click", async () => {
+    // =========================================
+    // تهيئة AdsGram
+    // =========================================
 
-      status.textContent = "جاري تحميل الإعلان...";
+    function initializeAds() {
+
+      if (!window.Adsgram) {
+
+        status.textContent =
+          "❌ لم يتم تحميل AdsGram. حاول تحديث التطبيق.";
+
+        return false;
+      }
+
+      try {
+
+        AdController = window.Adsgram.init({
+          blockId: BLOCK_ID
+        });
+
+        return true;
+
+      } catch (error) {
+
+        console.error("AdsGram initialization error:", error);
+
+        status.textContent =
+          "❌ تعذر تشغيل نظام الإعلانات.";
+
+        return false;
+      }
+    }
+
+
+    // =========================================
+    // تشغيل الإعلان
+    // =========================================
+
+    async function showAd() {
+
+      if (!AdController) {
+
+        status.textContent =
+          "❌ نظام الإعلانات غير جاهز.";
+
+        return;
+      }
+
+
+      // منع الضغط المتكرر
+      button.disabled = true;
+
+      button.textContent =
+        "⏳ جاري تحميل الإعلان...";
+
+      status.textContent =
+        "جاري تحميل الإعلان...";
+
 
       try {
 
         await AdController.show();
 
-        // الإعلان اكتمل في Reward
-        status.textContent = "🎉 تمت مشاهدة الإعلان! حصلت على المكافأة.";
+
+        // إذا وصل التنفيذ إلى هنا
+        // فهذا يعني أن Promise الخاصة بالإعلان اكتملت.
+
+        status.textContent =
+          "🎉 تمت مشاهدة الإعلان بنجاح!";
+
+
+        button.textContent =
+          "✅ تمت المشاهدة";
+
+
+        console.log(
+          "AdsGram reward completed successfully"
+        );
+
 
       } catch (error) {
 
-  console.error("AdsGram error:", error);
+        console.error(
+          "AdsGram error:",
+          error
+        );
 
-  status.textContent =
-    "حدث خطأ: " + JSON.stringify(error);
 
+        let message =
+          "❌ لم تكتمل مشاهدة الإعلان.";
+
+
+        if (error) {
+
+          if (error.description) {
+
+            message +=
+              "\n" + error.description;
+
+          } else if (error.message) {
+
+            message +=
+              "\n" + error.message;
+
+          }
+        }
+
+
+        status.textContent = message;
+
+
+        button.disabled = false;
+
+        button.textContent =
+          "📺 مشاهدة الإعلان";
       }
+    }
 
-    });
+
+    // =========================================
+    // زر الإعلان
+    // =========================================
+
+    button.addEventListener(
+      "click",
+      showAd
+    );
+
+
+    // =========================================
+    // بدء التشغيل
+    // =========================================
+
+    const adsReady = initializeAds();
+
+    if (!adsReady) {
+
+      button.disabled = true;
+
+    }
 
   </script>
 
