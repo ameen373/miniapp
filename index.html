@@ -1,275 +1,645 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Merge Coins 2048 - Telegram Mini App</title>
 
-  <title>Mini App - AdsGram</title>
-
-  <!-- Telegram Mini App -->
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- AdsGram -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <!-- Adsgram SDK -->
+  <script src="https://adsgram.ai/js/adsgram-ad-sdk.js"></script>
 
   <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --grid-bg: #334155;
+      --empty-tile: #1e293b;
+      --accent-color: #8b5cf6;
+      --coin-color: #fbbf24;
+      --text-color: #f8fafc;
+      --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
     }
 
     body {
-      margin: 0;
-      min-height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-family);
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f5f5f5;
-      color: #222;
-      padding: 20px;
+      justify-content: space-between;
+      min-height: 100vh;
+      padding: 12px;
+      overflow-x: hidden;
     }
 
     .container {
       width: 100%;
       max-width: 420px;
-      background: white;
-      border-radius: 18px;
-      padding: 30px 20px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 0 auto;
     }
 
-    h1 {
-      margin-top: 0;
-      font-size: 26px;
+    /* Header Styling */
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--card-bg);
+      padding: 14px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    p {
-      line-height: 1.7;
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    #adButton {
-      width: 100%;
-      border: 0;
-      border-radius: 12px;
-      padding: 16px 20px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      background: #0088cc;
-      color: white;
-      margin-top: 15px;
+    .title-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    #adButton:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .title-box h1 {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    #status {
-      margin-top: 20px;
-      padding: 10px;
+    .coins-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(251, 191, 36, 0.15);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      color: var(--coin-color);
+      font-size: 15px;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .stat-box {
+      background: rgba(15, 23, 42, 0.6);
+      padding: 8px;
       border-radius: 10px;
-      line-height: 1.6;
-      word-break: break-word;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .btn-reset {
+      background: #334155;
+      color: var(--text-color);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .btn-reset:active {
+      transform: scale(0.95);
+    }
+
+    /* Game Board Styling */
+    .board-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      background: var(--grid-bg);
+      border-radius: 16px;
+      padding: 10px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tile {
+      background: var(--empty-tile);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      transition: all 0.15s ease-in-out;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    /* Tile Value Colors */
+    .tile-2    { background: linear-gradient(135deg, #38bdf8, #0284c7); color: #fff; }
+    .tile-4    { background: linear-gradient(135deg, #818cf8, #4f46e5); color: #fff; }
+    .tile-8    { background: linear-gradient(135deg, #a855f7, #7e22ce); color: #fff; }
+    .tile-16   { background: linear-gradient(135deg, #f43f5e, #be123c); color: #fff; }
+    .tile-32   { background: linear-gradient(135deg, #fb923c, #c2410c); color: #fff; }
+    .tile-64   { background: linear-gradient(135deg, #facc15, #ca8a04); color: #0f172a; }
+    .tile-128  { background: linear-gradient(135deg, #4ade80, #15803d); color: #0f172a; font-size: 20px; }
+    .tile-256  { background: linear-gradient(135deg, #2dd4bf, #0f766e); color: #0f172a; font-size: 20px; }
+    .tile-512  { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff; font-size: 20px; }
+    .tile-1024 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; font-size: 18px; }
+    .tile-2048 { background: linear-gradient(135deg, #eab308, #a16207); color: #fff; font-size: 18px; box-shadow: 0 0 15px #eab308; }
+    .tile-super{ background: linear-gradient(135deg, #ec4899, #be185d); color: #fff; font-size: 16px; box-shadow: 0 0 20px #ec4899; }
+
+    .tile-new {
+      animation: pop 0.2s ease-in-out;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Directional On-Screen Controls */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 220px;
+      margin: 0 auto;
+    }
+
+    .btn-arrow {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+      font-size: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.1s, transform 0.1s;
+    }
+
+    .btn-arrow:active {
+      background: var(--accent-color);
+      transform: scale(0.92);
+    }
+
+    .btn-up { grid-column: 2; }
+    .btn-left { grid-column: 1; grid-row: 2; }
+    .btn-down { grid-column: 2; grid-row: 2; }
+    .btn-right { grid-column: 3; grid-row: 2; }
+
+    /* Adsgram Button */
+    .ad-section {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn-ad {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-ad:active {
+      transform: scale(0.97);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid var(--accent-color);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 1000;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      pointer-events: none;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Game Over Modal */
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: #ef4444;
+    }
+
+    .btn-modal {
+      background: var(--accent-color);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
     }
   </style>
 </head>
-
 <body>
 
+  <div class="toast" id="toast"></div>
+
   <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-top">
+        <div class="title-box">
+          <h1>MERGE COINS</h1>
+        </div>
+        <div class="coins-badge">
+          <span>🪙</span>
+          <span id="coins-count">0</span>
+        </div>
+      </div>
 
-    <h1>🎁 المكافأة</h1>
+      <div class="stats-bar">
+        <div class="stat-box">
+          <div class="stat-label">النقاط</div>
+          <div class="stat-value" id="current-score">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">الأفضل</div>
+          <div class="stat-value" id="best-score">0</div>
+        </div>
+        <button class="btn-reset" onclick="initGame()">إعادة 🔄</button>
+      </div>
+    </header>
 
-    <p>
-      شاهد الإعلان حتى النهاية للحصول على المكافأة.
-    </p>
+    <!-- Game Board -->
+    <div class="board-wrapper">
+      <div class="game-board" id="game-board"></div>
 
-    <button id="adButton">
-      📺 مشاهدة الإعلان
-    </button>
+      <!-- Game Over Overlay -->
+      <div class="modal-overlay" id="game-over-modal">
+        <div class="modal-title">انتهت اللعبة! 🎮</div>
+        <p>لا توجد تحركات إضافية متاحة</p>
+        <button class="btn-modal" onclick="initGame()">لعبة جديدة</button>
+      </div>
+    </div>
 
-    <div id="status"></div>
+    <!-- Directional Buttons Controls -->
+    <div class="controls-grid">
+      <button class="btn-arrow btn-up" onclick="handleMove('up')">⬆️</button>
+      <button class="btn-arrow btn-left" onclick="handleMove('left')">⬅️</button>
+      <button class="btn-arrow btn-down" onclick="handleMove('down')">⬇️</button>
+      <button class="btn-arrow btn-right" onclick="handleMove('right')">➡️</button>
+    </div>
 
+    <!-- Adsgram Rewarded Ad Button -->
+    <div class="ad-section">
+      <button class="btn-ad" id="watch-ad-btn" onclick="showAdsgramAd()">
+        <span>📺</span> شاهد إعلان واكسب 50 🪙
+      </button>
+    </div>
   </div>
 
-
   <script>
-
-    // =========================================
-    // Telegram
-    // =========================================
-
-    const tg = window.Telegram?.WebApp;
-
-    if (tg) {
-      tg.ready();
-      tg.expand();
+    // Initialize Telegram WebApp API
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
     }
 
+    // Game Variables & State
+    let board = [];
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem('mc_best_score') || '0');
+    let coins = parseInt(localStorage.getItem('mc_coins') || '0');
 
-    // =========================================
-    // AdsGram
-    // =========================================
+    const boardElement = document.getElementById('game-board');
+    const scoreElement = document.getElementById('current-score');
+    const bestScoreElement = document.getElementById('best-score');
+    const coinsElement = document.getElementById('coins-count');
+    const gameOverModal = document.getElementById('game-over-modal');
 
-    // هذا هو Block ID الصحيح
-    const BLOCK_ID = "43884";
+    // Toast Notification Helper
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, duration);
+    }
 
-    let AdController = null;
+    // Initialize Game
+    function initGame() {
+      board = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+      ];
+      score = 0;
+      gameOverModal.classList.remove('active');
+      updateStats();
+      spawnTile();
+      spawnTile();
+      renderBoard();
+    }
 
-
-    // =========================================
-    // عناصر الصفحة
-    // =========================================
-
-    const button = document.getElementById("adButton");
-    const status = document.getElementById("status");
-
-
-    // =========================================
-    // تهيئة AdsGram
-    // =========================================
-
-    function initializeAds() {
-
-      if (!window.Adsgram) {
-
-        status.textContent =
-          "❌ لم يتم تحميل AdsGram. حاول تحديث التطبيق.";
-
-        return false;
+    // Update Scores and Coins UI
+    function updateStats() {
+      scoreElement.textContent = score;
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('mc_best_score', bestScore);
       }
+      bestScoreElement.textContent = bestScore;
+      coinsElement.textContent = coins;
+      localStorage.setItem('mc_coins', coins);
+    }
 
-      try {
+    // Add Coins
+    function addCoins(amount) {
+      coins += amount;
+      updateStats();
+    }
 
-        AdController = window.Adsgram.init({
-          blockId: BLOCK_ID
-        });
-
-        return true;
-
-      } catch (error) {
-
-        console.error("AdsGram initialization error:", error);
-
-        status.textContent =
-          "❌ تعذر تشغيل نظام الإعلانات.";
-
-        return false;
+    // Spawn Random Tile (2 or 4)
+    function spawnTile() {
+      let emptyTiles = [];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (board[r][c] === 0) {
+            emptyTiles.push({ r, c });
+          }
+        }
+      }
+      if (emptyTiles.length > 0) {
+        let randomTile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+        board[randomTile.r][randomTile.c] = Math.random() < 0.9 ? 2 : 4;
       }
     }
 
+    // Render Grid UI
+    function renderBoard() {
+      boardElement.innerHTML = '';
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          let value = board[r][c];
+          let tile = document.createElement('div');
+          tile.className = 'tile';
+          
+          if (value > 0) {
+            tile.textContent = value;
+            if (value <= 2048) {
+              tile.classList.add(`tile-${value}`);
+            } else {
+              tile.classList.add('tile-super');
+            }
+          }
+          boardElement.appendChild(tile);
+        }
+      }
+    }
 
-    // =========================================
-    // تشغيل الإعلان
-    // =========================================
+    // Slide and Merge Array Row
+    function slide(row) {
+      let nonZeros = row.filter(val => val !== 0);
+      let newRow = [];
+      let gainedScore = 0;
+      let gainedCoins = 0;
 
-    async function showAd() {
+      for (let i = 0; i < nonZeros.length; i++) {
+        if (i < nonZeros.length - 1 && nonZeros[i] === nonZeros[i + 1]) {
+          let mergedVal = nonZeros[i] * 2;
+          newRow.push(mergedVal);
+          gainedScore += mergedVal;
+          gainedCoins += Math.max(1, Math.floor(mergedVal / 4)); // Earn coins on merge
+          i++;
+        } else {
+          newRow.push(nonZeros[i]);
+        }
+      }
 
-      if (!AdController) {
+      while (newRow.length < 4) {
+        newRow.push(0);
+      }
 
-        status.textContent =
-          "❌ نظام الإعلانات غير جاهز.";
+      return { row: newRow, score: gainedScore, coins: gainedCoins };
+    }
 
+    // Handle Directional Movements
+    function handleMove(direction) {
+      let moved = false;
+      let totalGainedScore = 0;
+      let totalGainedCoins = 0;
+
+      if (direction === 'left' || direction === 'right') {
+        for (let r = 0; r < 4; r++) {
+          let row = board[r];
+          if (direction === 'right') row = [...row].reverse();
+          
+          let res = slide(row);
+          let finalRow = direction === 'right' ? res.row.reverse() : res.row;
+
+          if (JSON.stringify(board[r]) !== JSON.stringify(finalRow)) moved = true;
+          board[r] = finalRow;
+          totalGainedScore += res.score;
+          totalGainedCoins += res.coins;
+        }
+      } else if (direction === 'up' || direction === 'down') {
+        for (let c = 0; c < 4; c++) {
+          let col = [board[0][c], board[1][c], board[2][c], board[3][c]];
+          if (direction === 'down') col = col.reverse();
+
+          let res = slide(col);
+          let finalCol = direction === 'down' ? res.row.reverse() : res.row;
+
+          for (let r = 0; r < 4; r++) {
+            if (board[r][c] !== finalCol[r]) moved = true;
+            board[r][c] = finalCol[r];
+          }
+          totalGainedScore += res.score;
+          totalGainedCoins += res.coins;
+        }
+      }
+
+      if (moved) {
+        score += totalGainedScore;
+        if (totalGainedCoins > 0) addCoins(totalGainedCoins);
+        spawnTile();
+        renderBoard();
+        updateStats();
+
+        if (checkGameOver()) {
+          gameOverModal.classList.add('active');
+        }
+      }
+    }
+
+    // Check if Game Over
+    function checkGameOver() {
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (board[r][c] === 0) return false;
+          if (c < 3 && board[r][c] === board[r][c + 1]) return false;
+          if (r < 3 && board[r][c] === board[r + 1][c]) return false;
+        }
+      }
+      return true;
+    }
+
+    // Keyboard Controls
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') handleMove('up');
+      else if (e.key === 'ArrowDown') handleMove('down');
+      else if (e.key === 'ArrowLeft') handleMove('left');
+      else if (e.key === 'ArrowRight') handleMove('right');
+    });
+
+    // Touch Swipe Controls for Mobile
+    let startX = 0, startY = 0;
+    boardElement.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    boardElement.addEventListener('touchend', (e) => {
+      if (!startX || !startY) return;
+      let diffX = e.changedTouches[0].clientX - startX;
+      let diffY = e.changedTouches[0].clientY - startY;
+
+      if (Math.max(Math.abs(diffX), Math.abs(diffY)) > 30) {
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+          handleMove(diffX > 0 ? 'right' : 'left');
+        } else {
+          handleMove(diffY > 0 ? 'down' : 'up');
+        }
+      }
+      startX = 0;
+      startY = 0;
+    }, { passive: true });
+
+    // ==========================================
+    // Adsgram Rewarded Ad Integration (IMPORTANT)
+    // ==========================================
+    const ADSGRAM_BLOCK_ID = "YOUR_BLOCK_ID"; // 👈 استبدل هذا بـ Block ID الخاص بك من لوحة Adsgram
+
+    async function showAdsgramAd() {
+      if (typeof window.Adsgram === 'undefined') {
+        showToast('⚠️ يتعذر إيجاد مكتبة الإعلانات. تأكد من اتصالك بالإنترنت');
         return;
       }
 
-
-      // منع الضغط المتكرر
-      button.disabled = true;
-
-      button.textContent =
-        "⏳ جاري تحميل الإعلان...";
-
-      status.textContent =
-        "جاري تحميل الإعلان...";
-
-
       try {
+        // Init Adsgram Controller
+        const AdController = window.Adsgram.init({
+          blockId: ADSGRAM_BLOCK_ID
+        });
 
-        await AdController.show();
+        // Show Rewarded Video Ad
+        const result = await AdController.show();
 
-
-        // إذا وصل التنفيذ إلى هنا
-        // فهذا يعني أن Promise الخاصة بالإعلان اكتملت.
-
-        status.textContent =
-          "🎉 تمت مشاهدة الإعلان بنجاح!";
-
-
-        button.textContent =
-          "✅ تمت المشاهدة";
-
-
-        console.log(
-          "AdsGram reward completed successfully"
-        );
-
+        // On Success / Reward
+        addCoins(50);
+        showToast('🎉 تهانينا! شاهدت الإعلان وحصلت على 50 🪙');
 
       } catch (error) {
-
-        console.error(
-          "AdsGram error:",
-          error
-        );
-
-
-        let message =
-          "❌ لم تكتمل مشاهدة الإعلان.";
-
-
-        if (error) {
-
-          if (error.description) {
-
-            message +=
-              "\n" + error.description;
-
-          } else if (error.message) {
-
-            message +=
-              "\n" + error.message;
-
-          }
+        console.error('Adsgram Ad Error:', error);
+        
+        // Catch User Skip or Network Errors
+        if (error && error.description) {
+          showToast(`⚠️ ${error.description}`);
+        } else {
+          showToast('⚠️ لم يتم إكمال الإعلان، يرجى المحاولة مرة أخرى');
         }
-
-
-        status.textContent = message;
-
-
-        button.disabled = false;
-
-        button.textContent =
-          "📺 مشاهدة الإعلان";
       }
     }
 
-
-    // =========================================
-    // زر الإعلان
-    // =========================================
-
-    button.addEventListener(
-      "click",
-      showAd
-    );
-
-
-    // =========================================
-    // بدء التشغيل
-    // =========================================
-
-    const adsReady = initializeAds();
-
-    if (!adsReady) {
-
-      button.disabled = true;
-
-    }
-
+    // Start Game on Page Load
+    initGame();
   </script>
-
 </body>
 </html>
